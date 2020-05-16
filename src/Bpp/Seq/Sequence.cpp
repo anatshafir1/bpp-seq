@@ -156,6 +156,7 @@ BasicSequence& BasicSequence::operator=(const BasicSequence& s)
 void BasicSequence::setContent(const std::string& sequence)
 {
   // Remove blanks in sequence
+  
   content_ = StringSequenceTools::codeSequence(TextTools::removeWhiteSpaces(sequence), getAlphabet());
   //Warning, an exception may be thrown here!
 }

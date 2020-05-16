@@ -16,6 +16,7 @@ SET(CPP_FILES
   Bpp/Seq/Alphabet/DNA.cpp
   Bpp/Seq/Alphabet/DefaultAlphabet.cpp
   Bpp/Seq/Alphabet/IntegerAlphabet.cpp
+  Bpp/Seq/Alphabet/ChromosomeAlphabet.cpp
   Bpp/Seq/Alphabet/LetterAlphabet.cpp
   Bpp/Seq/Alphabet/LexicalAlphabet.cpp
   Bpp/Seq/Alphabet/NumericAlphabet.cpp

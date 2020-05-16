@@ -42,6 +42,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include "Alphabet/Alphabet.h"
 #include "Alphabet/AlphabetExceptions.h"
+#include "Alphabet/ChromosomeAlphabet.h"
 #include "SequenceExceptions.h"
 #include <Bpp/Exceptions.h>
 
