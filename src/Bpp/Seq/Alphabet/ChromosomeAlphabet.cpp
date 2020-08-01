@@ -47,7 +47,7 @@
 
 using namespace bpp;
 
-ChromosomeAlphabet::ChromosomeAlphabet(unsigned int min, unsigned int max) : MIN_(min),MAX_(max)
+ChromosomeAlphabet::ChromosomeAlphabet(unsigned int min, unsigned int max) : MIN_(min),MAX_(max), numOfCompositeStates_(0), compositeAlphabetMap_()
 {
   // Alphabet size definition
   //resize(MAX_);
@@ -69,7 +69,7 @@ const AlphabetState& ChromosomeAlphabet::getState(int num) const {
       return(AbstractAlphabet::getState(num));
 
 }
-
+/********************************************************************************/
 std::vector<int> ChromosomeAlphabet::getAlias(int state) const{
   if (!isIntInAlphabet(state)) throw BadIntException(state, "ChromosomeAlphabet::getAlias(int): Specified chromosome number unknown.");
   std::vector<int> v;
@@ -77,11 +77,18 @@ std::vector<int> ChromosomeAlphabet::getAlias(int state) const{
     for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_); i++){
       v.push_back(i);
     }
-  }else{
+  }else if (state <= static_cast<int>(MAX_)) {
     v.push_back(state);
-  } 
+  }else{
+    const std::vector<int> states = getSetOfStatesForAComposite(state);
+    for (size_t i = 0; i < states.size(); i++){
+      v.push_back(states[i]);
+    }
+
+  }
   return v;
 }
+/********************************************************************************/
 
 std::vector<std::string> ChromosomeAlphabet::getAlias(const std::string& state) const{
   if (!isCharInAlphabet(state)) throw BadCharException(state, "ChromosomeAlphabet::getAlias(char): Specified chromosome number unknown.");
@@ -90,8 +97,152 @@ std::vector<std::string> ChromosomeAlphabet::getAlias(const std::string& state) 
     for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_); i++){
       v.push_back(intToChar(i));
     }
-  }else{
+  }else if (charToInt(state) <= static_cast<int>(MAX_)){
     v.push_back(state);
-  }
+  }else{
+    const std::vector<int> states = getSetOfStatesForAComposite(charToInt(state));
+    for (size_t i = 0; i < states.size(); i++){
+      v.push_back(intToChar(states[i]));
+    }
+  } 
   return v;
+}
+/*******************************************************************/
+bool ChromosomeAlphabet::isComposite(const std::string& state) const{
+  if (state.find("_") == std::string::npos){
+    return false;
+  }
+  StringTokenizer st(state, "_", false, false);
+  std::vector<std::string> v;
+  while(st.hasMoreToken()){
+    v.push_back(st.nextToken());
+  }
+  if (state.find("=") == std::string::npos){
+    //the probabilities are not given- should check whether all the items are integers
+    for (size_t i = 0; i < v.size(); i ++){
+      if (!isInteger(v[i])){
+        return false;
+      }
+    }
+  }else{
+    //The probabilities are given. Should check whether the even numbers are integers and
+    //the odd numbers are probabilities
+    double sumOfProbabilities = 0;
+    for (size_t i = 0; i < v.size(); i++){
+      if (v[i].find("=") == std::string::npos){
+        return false;
+      }
+      StringTokenizer splittedPair(v[i], "=", false, false);
+      std::vector <std::string> v_state_prob;
+      while(splittedPair.hasMoreToken()){
+        v_state_prob.push_back(splittedPair.nextToken());
+      }
+      if (v_state_prob.size() > 2){
+        return false;
+      }
+      if (!isInteger(v_state_prob[0])){
+        return false;
+      }
+      if (!isProbability(v_state_prob[1])){
+        return false;
+      }
+      sumOfProbabilities += atof(v_state_prob[1].c_str());
+      if (sumOfProbabilities > 1){
+        return false;
+      }     
+    }
+    if (sumOfProbabilities < 1){
+      return false;
+    }
+  }
+  return true;
+}
+/******************************************************************/
+bool ChromosomeAlphabet::isInteger(const std::string& str) const{
+  for (size_t i = 0; i < str.length(); i++){
+    if (!isdigit(str[i])){
+      return false;
+    }
+  }
+  int s = atoi(str.c_str());
+  if ((s > static_cast<int>(MAX_)) || (s < static_cast<int>(MIN_))){
+    return false;
+  }
+  return true;
+}
+/*****************************************************************/
+bool ChromosomeAlphabet::isProbability(const std::string& str) const{
+  for (size_t i = 0; i < str.length(); i++){
+    // There is no point for the user to give a list of possible states if one of 
+    // them is 1 or 0
+    if ((i == 0) && (str[0] != '0')){
+      return false;
+    }
+    if (i == 1){
+      if (str[i] != '.'){
+        return false;
+      } 
+    }
+    if (i > 1){
+      if (!isdigit(str[i])){
+        return false;
+      }
+    }
+  }
+  return true;
+}
+/******************************************************************************/
+void ChromosomeAlphabet::setCompositeState(std::string& state){
+  if (isComposite(state)){
+    if (!isCharInAlphabet(state)){
+      numOfCompositeStates_ += 1;
+      registerState(new AlphabetState(static_cast<int>(MAX_+1 + numOfCompositeStates_), state, "Unresolved state"));
+      addCompositeStateToMap(state);
+
+    }
+  }
+}
+/**********************************************************************************************/
+void ChromosomeAlphabet::addCompositeStateToMap(std::string& state){
+  StringTokenizer st(state, "=_", false, false);
+  std::vector<std::string> v;
+  while(st.hasMoreToken()){
+    v.push_back(st.nextToken());
+  }
+  int charId = charToInt(state);
+  if (state.find("=") == std::string::npos){
+    // only integers are expected
+    //compositeAlphabetMap_[charId].reserve(v.size());
+    for (size_t i = 0; i < v.size(); i++){
+      //pair <int, double> stateAndProb;
+      int stateInSet = atoi(v[i].c_str());
+      double probability = 1;
+      compositeAlphabetMap_[charId][stateInSet] = probability;
+    }
+  }else{
+    // chromosome states and probabilities
+    //compositeAlphabetMap_[charId].reserve(size_t(v.size()/2));
+    for (size_t i = 0; i < (size_t)(v.size()); i++){
+      //pair <int, double> stateAndProb;
+      if (i % 2 != 0){
+        continue;
+      }
+      int stateInSet = atoi(v[i].c_str());
+      double probability = atof(v[i+1].c_str());
+      compositeAlphabetMap_[charId][stateInSet] = probability;
+    }
+  }
+}
+/***********************************************************************/
+const std::vector <int> ChromosomeAlphabet::getSetOfStatesForAComposite(int state) const{
+  std::vector <int> setOfStates;
+  //const std::vector <pair<int, double>> stateAndProb = getCompositeStatesAndProbsForIntLetter(state);
+  const std::map <int, double> stateAndProb = getCompositeStatesAndProbsForIntLetter(state);
+  std::map<int, double>::const_iterator it = stateAndProb.begin();
+  while (it != stateAndProb.end()){
+    int s = it->first;
+    setOfStates.push_back(s);
+    it++;
+  }
+  return setOfStates;
 }

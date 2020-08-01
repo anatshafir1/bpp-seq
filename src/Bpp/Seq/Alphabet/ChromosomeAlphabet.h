@@ -42,6 +42,15 @@
 
 #include "AbstractAlphabet.h"
 #include "IntegerAlphabet.h"
+#include <Bpp/Text/StringTokenizer.h>
+#include <Bpp/Text/TextTools.h>
+
+// From the STL:
+#include <string>
+#include <vector>
+#include <map>
+#include <utility>
+using namespace std;
 
 namespace bpp
 {
@@ -56,18 +65,24 @@ class ChromosomeAlphabet :
 private:
   unsigned int MIN_;
   unsigned int MAX_;
+  unsigned int numOfCompositeStates_;
+  std::map <int, std::map<int, double>> compositeAlphabetMap_;
+
+  void addCompositeStateToMap(std::string& state);
   
 
 public:
   // class constructor
   ChromosomeAlphabet(unsigned int min, unsigned int max);
-  ChromosomeAlphabet(const ChromosomeAlphabet& bia) : AbstractAlphabet(bia), MIN_(bia.MIN_),MAX_(bia.MAX_) {}
+  ChromosomeAlphabet(const ChromosomeAlphabet& bia) : AbstractAlphabet(bia), MIN_(bia.MIN_),MAX_(bia.MAX_), numOfCompositeStates_(0), compositeAlphabetMap_() {}
 
   ChromosomeAlphabet& operator=(const ChromosomeAlphabet& bia)
   {
     AbstractAlphabet::operator=(bia);
     MIN_=bia.MIN_;
     MAX_=bia.MAX_;
+    numOfCompositeStates_ = bia.numOfCompositeStates_;
+    compositeAlphabetMap_ = bia.compositeAlphabetMap_;
     
     return *this;
   }
@@ -83,7 +98,7 @@ public:
 
   unsigned int getSize() const { return MAX_ - MIN_ + 1; }
 
-  unsigned int getNumberOfTypes() const { return MAX_ - MIN_ + 2; }
+  unsigned int getNumberOfTypes() const { return MAX_ - MIN_ + 2 + numOfCompositeStates_; }
 
   int getMin() const {return static_cast<int>(MIN_);}
 
@@ -91,17 +106,37 @@ public:
   
   std::string getAlphabetType() const { return "Chromosome"; }
   
-  int getUnknownCharacterCode() const { return static_cast<int>(MAX_-MIN_+2); }
+  //int getUnknownCharacterCode() const { return static_cast<int>(MAX_-MIN_+2); }
+  int getUnknownCharacterCode() const { return static_cast<int>(MAX_+ 2 + numOfCompositeStates_); }
   
-  bool isUnresolved(int state) const { return state > static_cast<int>(MAX_-MIN_+1); }
-  
-  bool isUnresolved(const std::string& state) const { return charToInt(state) > static_cast<int>(MAX_-MIN_+1); }
+  //bool isUnresolved(int state) const { return state > static_cast<int>(MAX_-MIN_+1); }
+  bool isUnresolved(int state) const { return state > static_cast<int>(MAX_); }
+
+  //bool isUnresolved(const std::string& state) const { return charToInt(state) > static_cast<int>(MAX_-MIN_+1); }
+  bool isUnresolved(const std::string& state) const { return charToInt(state) > static_cast<int>(MAX_); }
 
   const AlphabetState& getState(int num) const;
 
   std::vector<int> getAlias(int state) const;
 
   std::vector<std::string> getAlias(const std::string& state) const;
+  bool isComposite(const std::string& state) const;
+  bool isInteger(const std::string& str) const;
+  bool isProbability(const std::string& str) const;
+  void setCompositeState(std::string& state);
+  unsigned int getNumberOfCompositeStates() const {return numOfCompositeStates_;}
+  const std::map<int, std::map<int,double>> getCompositeStatesMap() const {return compositeAlphabetMap_;}
+  const std:: map <int, double> getCompositeStatesAndProbsForIntLetter(int state) const{
+    return compositeAlphabetMap_.at(state);
+  }
+  const std::map <int, double> getCompositeStatesAndProbsForALetter(std::string& state) const{
+    return getCompositeStatesAndProbsForIntLetter(charToInt(state));
+  }
+  const std::vector <int> getSetOfStatesForAComposite(int state) const;
+  double getProbabilityForState(int state, int substate) const{
+    return (compositeAlphabetMap_.at(state)).at(substate);
+  } 
+  double getProbabilityForState(std::string& state, int substate) const{return getProbabilityForState(charToInt(state), substate);} 
 };
 } // end of namespace bpp.
 
