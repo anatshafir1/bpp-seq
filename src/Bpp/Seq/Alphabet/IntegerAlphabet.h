@@ -1,11 +1,11 @@
 //
 // File: BinaryAlphabet.h
 // Author: L Gueguen
-// Created on: vendredi 20 septembre 2013, à 23h 01
+// Created on: vendredi 20 septembre 2013, ï¿½ 23h 01
 //
 
 /*
-   Copyright or © or Copr. Bio++ Development Team, (November 17, 2004)
+   Copyright or ï¿½ or Copr. Bio++ Development Team, (November 17, 2004)
 
    This software is a computer program whose purpose is to provide classes
    for sequences analysis.
@@ -53,17 +53,19 @@ class IntegerAlphabet :
   public AbstractAlphabet
 {
 private:
+  unsigned int MIN_;
   unsigned int MAX_;
 
 public:
   // class constructor
-  IntegerAlphabet(unsigned int max);
+  IntegerAlphabet(unsigned int max, unsigned int min = 0);
 
-  IntegerAlphabet(const IntegerAlphabet& bia) : AbstractAlphabet(bia), MAX_(bia.MAX_) {}
+  IntegerAlphabet(const IntegerAlphabet& bia) : AbstractAlphabet(bia), MIN_(bia.MIN_), MAX_(bia.MAX_) {}
 
   IntegerAlphabet& operator=(const IntegerAlphabet& bia)
   {
     AbstractAlphabet::operator=(bia);
+    MIN_=bia.MIN_;
     MAX_=bia.MAX_;
     
     return *this;
@@ -77,9 +79,9 @@ public:
   virtual ~IntegerAlphabet() {}
 
 public:
-  unsigned int getSize() const { return MAX_ + 1; }
+  unsigned int getSize() const { return MAX_ - MIN_ + 1; }
 
-  unsigned int getNumberOfTypes() const { return MAX_ + 1; }
+  unsigned int getNumberOfTypes() const { return MAX_ - MIN_ + 1; }
   
   std::string getAlphabetType() const { return "Integer"; }
   
@@ -87,7 +89,19 @@ public:
   
   bool isUnresolved(int state) const { return state == static_cast<int>(MAX_); }
   
-  bool isUnresolved(const std::string& state) const { return false; }
+  bool isUnresolved(const std::string& state) const {return charToInt(state) == static_cast<int>(MAX_); }
+
+  std::vector<int> getAlias(int state) const;
+
+  std::vector<std::string> getAlias(const std::string& state) const;
+
+  bool isResolvedIn(int state1, int state2) const;
+
+  int getMin() const {return static_cast<int>(MIN_);}
+
+  int getMax() const {return static_cast<int>(MAX_);}
+
+  
 };
 } // end of namespace bpp.
 

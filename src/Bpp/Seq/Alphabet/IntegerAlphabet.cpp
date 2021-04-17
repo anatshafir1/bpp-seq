@@ -1,11 +1,11 @@
 //
 // File: BinaryAlphabet.cpp
 // Authors: Laurent Gueguen
-// Created on: vendredi 20 septembre 2013, à 23h 10
+// Created on: vendredi 20 septembre 2013, ï¿½ 23h 10
 //
 
 /*
-   Copyright or © or Copr. Bio++ Development Team, (November 17, 2004)
+   Copyright or ï¿½ or Copr. Bio++ Development Team, (November 17, 2004)
 
    This software is a computer program whose purpose is to provide classes
    for sequences analysis.
@@ -46,17 +46,82 @@
 
 using namespace bpp;
 
-IntegerAlphabet::IntegerAlphabet(unsigned int max) : MAX_(max)
+IntegerAlphabet::IntegerAlphabet(unsigned int max, unsigned int min) : MIN_(min), MAX_(max)
 {
   // Alphabet size definition
-  resize(MAX_);
+  resize(MAX_- MIN_);
 
   // Alphabet content definition
   registerState(new AlphabetState(-1, "-", "Gap"));
 
-  for (int i = 0; i < static_cast<int>(MAX_); i++)
+  for (int i = MIN_; i < static_cast<int>(MAX_); i++)
   {
     registerState(new AlphabetState(i, TextTools::toString(i), ""));
   }
+  registerState(new AlphabetState(MAX_,  "X", "Unresolved state"));
 }
+
+/********************************************************************************************************************/
+
+std::vector<int> IntegerAlphabet::getAlias(int state) const{
+  if (!isIntInAlphabet(state)) throw BadIntException(state, "IntegerAlphabet::getAlias(int): Specified base unknown.");
+  std::vector<int> v;
+  if (state == static_cast<int>(MAX_)){
+    for (size_t i = MIN_; i < MAX_; i++){
+      v.push_back(static_cast<int>(i));
+    }
+  }else{
+    v.push_back(state);
+  } 
+  return v;
+}
+
+/********************************************************************************************************************/
+
+std::vector<std::string> IntegerAlphabet::getAlias(const std::string& state) const{
+  if (!isCharInAlphabet(state)) throw BadCharException(state, "IntegerAlphabet::getAlias(char): Specified base unknown.");
+  
+  std::vector<std::string> v;
+  if (state == "X")
+  {
+    for (size_t i = MIN_; i < MAX_; i++){
+      v.push_back(TextTools::toString(i));
+    }
+  }
+  else
+    v.push_back(state);
+  
+  return v;
+
+}
+
+/********************************************************************************************************************/
+
+bool IntegerAlphabet::isResolvedIn(int state1, int state2) const{
+  if (state1 == -1){
+    return state1 == state2;
+  }
+  if (state1 < 0 || !isIntInAlphabet(state1))
+    throw BadIntException(state1, "IntegerAlphabet::isResolvedIn(int, int): Specified base unknown.");
+
+  if (state2 < 0 || !isIntInAlphabet(state2))
+    throw BadIntException(state2, "IntegerAlphabet::isResolvedIn: Specified base unknown.");
+
+  if (isUnresolved(state2))
+    throw BadIntException(state2, "IntegerAlphabet::isResolvedIn: Unresolved base."); 
+
+  if (state2 >= (int)getNumberOfTypes())
+    throw IndexOutOfBoundsException("IntegerAlphabet::isResolvedIn", state2, 0, getNumberOfTypes() - 1);
+
+  std::vector<int> states = getAlias(state1);
+  for (size_t j = 0; j < states.size(); j++)
+  {
+     if (state2 == states[j]){
+        return true;
+     }
+  }
+  return false;
+}
+
+
 
