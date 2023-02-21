@@ -47,110 +47,110 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Bpp/Seq/Container/VectorSequenceContainer.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 #include <Bpp/Seq/Alphabet/NucleicAlphabet.h>
-#include <Bpp/Seq/Io/chrFasta.h>
-#include <iostream>
-#define MAX_CHR_ALPHA 25
-#define MIN_CHR_ALPHA 1
+//#include <Bpp/Seq/Io/chrFasta.h>
+// #include <iostream>
+// #define MAX_CHR_ALPHA 25
+// #define MIN_CHR_ALPHA 1
 
 using namespace bpp;
 using namespace std;
 
-VectorSiteContainer* resizeAlphabetForSequenceContainer(VectorSequenceContainer* vsc, unsigned int maxChrAlpha, ChromosomeAlphabet* alphaInitial);
-VectorSiteContainer* getCharacterData(const std :: string &path);
-void testOutput(VectorSiteContainer* vsc);
+// VectorSiteContainer* resizeAlphabetForSequenceContainer(VectorSequenceContainer* vsc, unsigned int maxChrAlpha, ChromosomeAlphabet* alphaInitial);
+// VectorSiteContainer* getCharacterData(const std :: string &path);
+// void testOutput(VectorSiteContainer* vsc);
 
-/********************************************************************************************************************************/
-void testOutput(VectorSiteContainer* vsc){
-    size_t numOfSequences = vsc->getNumberOfSequences();
-    vector <string> sequenceNames = vsc->getSequencesNames();
-    for (size_t i = 0; i < numOfSequences; i++){
-        BasicSequence seq = vsc->getSequence(sequenceNames[i]);
-        std::string strValue = seq.getChar(0);
-        int intValue = seq.getValue(0);
-        std::cout <<"**************"<<endl;
-        std::cout <<seq.getName() <<endl;
-        std::cout << "string rep: " << strValue << endl;
-        std::cout << "int rep: " << intValue << endl;
-    }
+// /********************************************************************************************************************************/
+// void testOutput(VectorSiteContainer* vsc){
+//     size_t numOfSequences = vsc->getNumberOfSequences();
+//     vector <string> sequenceNames = vsc->getSequencesNames();
+//     for (size_t i = 0; i < numOfSequences; i++){
+//         BasicSequence seq = vsc->getSequence(sequenceNames[i]);
+//         std::string strValue = seq.getChar(0);
+//         int intValue = seq.getValue(0);
+//         std::cout <<"**************"<<endl;
+//         std::cout <<seq.getName() <<endl;
+//         std::cout << "string rep: " << strValue << endl;
+//         std::cout << "int rep: " << intValue << endl;
+//     }
     
-}
+// }
 
-/********************************************************************************************************************************/
-VectorSiteContainer* getCharacterData (const string& path){
-    ChromosomeAlphabet* alphaInitial = new ChromosomeAlphabet(MIN_CHR_ALPHA, MAX_CHR_ALPHA);
-    VectorSequenceContainer* initialSetOfSequences = chrFasta::readSequencesFromFile(path, alphaInitial);
-    size_t numOfSequences = initialSetOfSequences->getNumberOfSequences();
-    vector <string> sequenceNames = initialSetOfSequences->getSequencesNames();
+// /********************************************************************************************************************************/
+// VectorSiteContainer* getCharacterData (const string& path){
+//     ChromosomeAlphabet* alphaInitial = new ChromosomeAlphabet(MIN_CHR_ALPHA, MAX_CHR_ALPHA);
+//     VectorSequenceContainer* initialSetOfSequences = chrFasta::readSequencesFromFile(path, alphaInitial);
+//     size_t numOfSequences = initialSetOfSequences->getNumberOfSequences();
+//     vector <string> sequenceNames = initialSetOfSequences->getSequencesNames();
 
-    unsigned int maxNumberOfChr = 1; //the minimal number of chromosomes cannot be zero
-    //unsigned int minNumOfChr = MAX_CHR_ALPHA;
+//     unsigned int maxNumberOfChr = 1; //the minimal number of chromosomes cannot be zero
+//     //unsigned int minNumOfChr = MAX_CHR_ALPHA;
 
-    for (size_t i = 0; i < numOfSequences; i++){
-        BasicSequence seq = initialSetOfSequences->getSequence(sequenceNames[i]);
-        int character = seq.getValue(0);
-        if (character == -1){
-            continue;
-        }
+//     for (size_t i = 0; i < numOfSequences; i++){
+//         BasicSequence seq = initialSetOfSequences->getSequence(sequenceNames[i]);
+//         int character = seq.getValue(0);
+//         if (character == -1){
+//             continue;
+//         }
 
-        if (character == static_cast<int>(MAX_CHR_ALPHA)+1){
-            continue;
-        }
-        // if it is a composite state
-        if (character > static_cast<int>(MAX_CHR_ALPHA) +1){
-            const std::vector<int> compositeCharacters = alphaInitial->getSetOfStatesForAComposite(character);
-            for (size_t j = 0; j < compositeCharacters.size(); j++){
-                if ((unsigned int) compositeCharacters[j] > maxNumberOfChr){
-                    maxNumberOfChr = compositeCharacters[j];
-                }
-            }
-            continue;
-        }
-        if ((unsigned int) character > maxNumberOfChr){
-            maxNumberOfChr = character;
-        }
-        // if ((unsigned int) character < minNumOfChr){
-        //     minNumOfChr = character;
-        // }
+//         if (character == static_cast<int>(MAX_CHR_ALPHA)+1){
+//             continue;
+//         }
+//         // if it is a composite state
+//         if (character > static_cast<int>(MAX_CHR_ALPHA) +1){
+//             const std::vector<int> compositeCharacters = alphaInitial->getSetOfStatesForAComposite(character);
+//             for (size_t j = 0; j < compositeCharacters.size(); j++){
+//                 if ((unsigned int) compositeCharacters[j] > maxNumberOfChr){
+//                     maxNumberOfChr = compositeCharacters[j];
+//                 }
+//             }
+//             continue;
+//         }
+//         if ((unsigned int) character > maxNumberOfChr){
+//             maxNumberOfChr = character;
+//         }
+//         // if ((unsigned int) character < minNumOfChr){
+//         //     minNumOfChr = character;
+//         // }
 
-    }
-    VectorSiteContainer* vsc = resizeAlphabetForSequenceContainer(initialSetOfSequences, maxNumberOfChr, alphaInitial);
-    delete initialSetOfSequences;
-    delete alphaInitial;
-    return vsc;
-}
-/*********************************************************************************************************************************/
-VectorSiteContainer* resizeAlphabetForSequenceContainer(VectorSequenceContainer* vsc, unsigned int maxChrAlpha, ChromosomeAlphabet* alphaInitial){
-    size_t numOfSequences = vsc->getNumberOfSequences();
-    vector <string> sequenceNames = vsc->getSequencesNames();
-    ChromosomeAlphabet* new_alphabet = new ChromosomeAlphabet(MIN_CHR_ALPHA, maxChrAlpha);
-    // fill with composite values
-    if (alphaInitial->getNumberOfCompositeStates() > 0){
-        const std::map <int, std::map<int, double>> compositeStates = alphaInitial->getCompositeStatesMap();
-        std::map <int, std::map<int, double>>::const_iterator it = compositeStates.begin();
-        while (it != compositeStates.end()){
-            int compositeState = it->first;
-            std::string charComposite = alphaInitial->intToChar(compositeState);
-            new_alphabet->setCompositeState(charComposite);
-            it++;
-        }
-    }
-    VectorSiteContainer* resized_alphabet_site_container = new VectorSiteContainer(new_alphabet);
-    for (size_t i = 0; i < numOfSequences; i++){
-        BasicSequence seq = vsc->getSequence(sequenceNames[i]);
-        BasicSequence new_seq = BasicSequence(seq.getName(), seq.getChar(0), new_alphabet);
-        resized_alphabet_site_container->addSequence(new_seq);
+//     }
+//     VectorSiteContainer* vsc = resizeAlphabetForSequenceContainer(initialSetOfSequences, maxNumberOfChr, alphaInitial);
+//     delete initialSetOfSequences;
+//     delete alphaInitial;
+//     return vsc;
+// }
+// /*********************************************************************************************************************************/
+// VectorSiteContainer* resizeAlphabetForSequenceContainer(VectorSequenceContainer* vsc, unsigned int maxChrAlpha, ChromosomeAlphabet* alphaInitial){
+//     size_t numOfSequences = vsc->getNumberOfSequences();
+//     vector <string> sequenceNames = vsc->getSequencesNames();
+//     ChromosomeAlphabet* new_alphabet = new ChromosomeAlphabet(MIN_CHR_ALPHA, maxChrAlpha);
+//     // fill with composite values
+//     if (alphaInitial->getNumberOfCompositeStates() > 0){
+//         const std::map <int, std::map<int, double>> compositeStates = alphaInitial->getCompositeStatesMap();
+//         std::map <int, std::map<int, double>>::const_iterator it = compositeStates.begin();
+//         while (it != compositeStates.end()){
+//             int compositeState = it->first;
+//             std::string charComposite = alphaInitial->intToChar(compositeState);
+//             new_alphabet->setCompositeState(charComposite);
+//             it++;
+//         }
+//     }
+//     VectorSiteContainer* resized_alphabet_site_container = new VectorSiteContainer(new_alphabet);
+//     for (size_t i = 0; i < numOfSequences; i++){
+//         BasicSequence seq = vsc->getSequence(sequenceNames[i]);
+//         BasicSequence new_seq = BasicSequence(seq.getName(), seq.getChar(0), new_alphabet);
+//         resized_alphabet_site_container->addSequence(new_seq);
 
-    }
-    return resized_alphabet_site_container;
-}
+//     }
+//     return resized_alphabet_site_container;
+// }
 
-/*********************************************************************************************************************************/
+// /*********************************************************************************************************************************/
 
 int main() {
-  string path = "/home/anats/Documents/data/examples/example.fasta";
-  VectorSiteContainer* vsc = getCharacterData(path);
-  testOutput(vsc);
+//   string path = "/home/anats/Documents/data/examples/example.fasta";
+//   VectorSiteContainer* vsc = getCharacterData(path);
+//   testOutput(vsc);
 
-  delete vsc;
+//   delete vsc;
   return 0;
 }
